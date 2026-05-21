@@ -272,8 +272,7 @@ export default function Home() {
     };
 
     setInvoiceHistory(prev => [completedInvoice, ...prev]);
-    setShift(prev => ({ ...prev, expectedCash: prev.expectedCash + currentTotal }));
-    logAction(currentUser.name, "إصدار فاتورة وتصفية حساب", `موقع: ${selectedTentId} | القيمة المسددة: ${currentTotal.toFixed(2)} ₪`, "🧾");
+setShift((prev: any) => ({ ...prev, expectedCash: prev.expectedCash + currentTotal }));    logAction(currentUser.name, "إصدار فاتورة وتصفية حساب", `موقع: ${selectedTentId} | القيمة المسددة: ${currentTotal.toFixed(2)} ₪`, "🧾");
 
     // تنفيذ عملية الطباعة الفورية
     setTimeout(() => {
