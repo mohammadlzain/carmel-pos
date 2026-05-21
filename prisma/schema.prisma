@@ -1,0 +1,104 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  CASHIER
+  SERVICE
+}
+
+enum TableStatus {
+  FREE
+  OCCUPIED
+}
+
+enum OrderStatus {
+  OPEN
+  CLOSED
+}
+
+enum PaymentMethod {
+  CASH
+  VISA
+  MIXED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      Role     @default(CASHIER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  price       Float
+  image       String?
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model RestaurantTable {
+  id        String      @id @default(cuid())
+  number    String      @unique
+  status    TableStatus @default(FREE)
+  orders    Order[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Order {
+  id            String          @id @default(cuid())
+  orderNumber   String          @unique @default(cuid())
+  status        OrderStatus     @default(OPEN)
+  total         Float           @default(0)
+  discount      Float           @default(0)
+  finalTotal    Float           @default(0)
+  paymentMethod PaymentMethod?
+  
+  tableId       String?
+  table         RestaurantTable? @relation(fields: [tableId], references: [id])
+  
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  
+  items         OrderItem[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  quantity  Int
+  price     Float
+  
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
