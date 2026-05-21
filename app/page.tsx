@@ -2,8 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppContext } from '@/app/context/AppContext';
-
+import { useAppContext } from '../context/AppContext';
 export default function Home() {
   const router = useRouter();
   const { currentUser } = useAppContext();
