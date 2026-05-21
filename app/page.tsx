@@ -9,96 +9,6 @@ export default function Home() {
   const { currentUser } = useAppContext();
 
   useEffect(() => {
-    if (currentUser) {
-      if (currentUser.role === 'boss') {
-        router.push('/admin');
-      } else if (currentUser.role === 'cashier') {
-        router.push('/cashier');
-      } else if (currentUser.role === 'service') {
-        router.push('/service');
-      }
-    } else {
-      router.push('/login');
-    }
-  }, [currentUser, router]);
-
-  return null;
-}
-
-
-// الحسابات النهائية للنظام مع كلمات المرور المحدثة
-const usersDatabase = [
-  { id: 1, username: "Boss", password: "551", role: "boss", name: "المدير العام" },
-  { id: 2, username: "Cashier", password: "453", role: "cashier", name: "كاشير الصالة" },
-  { id: 3, username: "Service", password: "123", role: "service", name: "مضيف الميدان" }
-];
-
-export default function KarmelUltimatePOS() {
-  // --- الولايات البرمجية (States) ---
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
-  const [loginError, setLoginError] = useState('');
-  
-  // نظام الأقسام والمنيو
-  const [categories, setCategories] = useState([
-    { id: 'drinks', nameAr: 'مشروبات', nameEn: 'Drinks' },
-    { id: 'meals', nameAr: 'وجبات ومشاوي', nameEn: 'Meals & Grills' },
-    { id: 'hookah', nameAr: 'أراجيل', nameEn: 'Hookah' }
-  ]);
-  const [newCategoryForm, setNewCategoryForm] = useState({ id: '', nameAr: '', nameEn: '' });
-
-  const [menuItems, setMenuItems] = useState([
-    { id: 1, nameAr: "قهوة عربية (دلة)", nameEn: "Arabic Coffee (Dallah)", price: 25, category: "drinks" },
-    { id: 2, nameAr: "شاي مرمية بلدية", nameEn: "Local Sage Tea", price: 7, category: "drinks" },
-    { id: 3, nameAr: "كيلو مشاوي مشكل", nameEn: "1KG Mixed Grill", price: 140, category: "meals" },
-    { id: 7, nameAr: "أرجيلة تفاحتين فاخر", nameEn: "Premium Double Apple Hookah", price: 30, category: "hookah" }
-  ]);
-  
-  const [tents, setTents] = useState<any[]>([]);
-  const [customTableCount, setCustomTableCount] = useState(0);
-  const [selectedTentId, setSelectedTentId] = useState<any>(null);
-  
-  // سلة الميدان المؤقتة (خاصة بالسيرفيس فقط)
-  const [serviceCart, setServiceCart] = useState<any[]>([]);
-  const [isDispatching, setIsDispatching] = useState(false);
-  const [showBossMenu, setShowBossMenu] = useState(true);
-
-  // طابور الطلبات المركزي المرسل للكاشير
-  const [incomingOrders, setIncomingOrders] = useState<any[]>([]);
-
-  // نظام الخصومات (خاص بالكاشير)
-  const [discountType, setDiscountType] = useState<'none' | 'amount' | 'percent'>('none');
-  const [discountValue, setDiscountValue] = useState<number>(0);
-
-  // نظام الورديات
-  const [shift, setShift] = useState({
-    isOpen: false,
-    openedBy: '',
-    openingCash: 0,
-    expectedCash: 0,
-    closedCash: 0,
-    discrepancy: 0,
-    status: 'closed'
-  });
-  const [shiftInputAmount, setShiftInputAmount] = useState<number>(0);
-
-  // السجلات والتقارير وفواتير اليوم
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [invoiceHistory, setInvoiceHistory] = useState<any[]>([]);
-
-  // نموذج المنيو للمدير
-  const [menuForm, setMenuForm] = useState({ id: 0, nameAr: '', nameEn: '', price: 0, category: 'drinks' });
-  const [isEditingMenu, setIsEditingMenu] = useState(false);
-
-  // النقل والتحويل بين الطاولات
-  const [transferFrom, setTransferFrom] = useState('');
-  const [transferTo, setTransferTo] = useState('');
-  const [isTransferOpen, setIsTransferOpen] = useState(false);
-  
-  const [activeCategory, setActiveCategory] = useState('all');
-
-  // توليد الخيام الافتراضية الـ 20 عند التشغيل
-  useEffect(() => {
     const initialTents = [];
     for (let i = 1; i <= 20; i++) {
       initialTents.push({
@@ -112,25 +22,26 @@ export default function KarmelUltimatePOS() {
     setTents(initialTents);
   }, []);
 
-  // دالة تنبيه صوتي عند إرسال طلب الميدان من السيرفس
+  // دالة تنبيه صوتي للكاشير عند وصول طلب جديد
   const playIncomingOrderSound = () => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
-
-      oscillator.type = 'triangle';
-      oscillator.frequency.setValueAtTime(720, audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(0.18, audioCtx.currentTime);
-
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
-
+      
       oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.18);
-      oscillator.onended = () => {
-        audioCtx.close();
-      };
+      setTimeout(() => {
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+      }, 120);
+      
+      oscillator.stop(audioCtx.currentTime + 0.3);
     } catch (e) {
       console.log("Audio play blocked by browser settings", e);
     }
@@ -225,57 +136,27 @@ export default function KarmelUltimatePOS() {
 
   const dispatchOrderToCashier = () => {
     if (serviceCart.length === 0 || !selectedTentId) return;
-    if (isDispatching) return;
 
-    setIsDispatching(true);
-    try {
-      const orderId = Math.floor(100 + Math.random() * 900);
-      const newOrderPayload = {
-        id: orderId,
-        tableId: selectedTentId,
-        waiter: currentUser.name,
-        timestamp: new Date().toLocaleTimeString('ar-EG'),
-        items: [...serviceCart],
-        isDone: false
-      };
+    const orderId = Math.floor(100 + Math.random() * 900);
+    const newOrderPayload = {
+      id: orderId,
+      tableId: selectedTentId,
+      waiter: currentUser.name,
+      timestamp: new Date().toLocaleTimeString('ar-EG'),
+      items: [...serviceCart],
+      isDone: false
+    };
 
-      setIncomingOrders(prev => [...prev, newOrderPayload]);
-      setTents(prev => prev.map(t => t.id === selectedTentId ? { ...t, status: 'occupied', waiter: currentUser.name } : t));
-      logAction(currentUser.name, "إرسال طلب للمطبخ", `طلب رقم #${orderId} لـ ${selectedTentId}`, "🚀");
-      
-      playIncomingOrderSound();
-      setServiceCart([]);
-    } finally {
-      setIsDispatching(false);
-    }
+    setIncomingOrders(prev => [...prev, newOrderPayload]);
+    setTents(prev => prev.map(t => t.id === selectedTentId ? { ...t, status: 'occupied', waiter: currentUser.name } : t));
+    logAction(currentUser.name, "إرسال طلب للمطبخ", `طلب رقم #${orderId} لـ ${selectedTentId}`, "🚀");
+    
+    playIncomingOrderSound();
+    setServiceCart([]);
   };
 
   const toggleOrderDone = (id: number) => {
     setIncomingOrders(prev => prev.map(o => o.id === id ? { ...o, isDone: !o.isDone } : o));
-  };
-
-  const resetDayForBoss = () => {
-    if (currentUser?.role !== 'boss') return;
-    if (!confirm('هل أنت متأكد من تصفير المبيعات وسجل النشاط؟ هذه العملية ستمسح الطلبات والفواتير والسجل الحالي.')) return;
-
-    setIncomingOrders([]);
-    setInvoiceHistory([]);
-    setAuditLogs([]);
-    setServiceCart([]);
-    setSelectedTentId(null);
-    setDiscountType('none');
-    setDiscountValue(0);
-    setShift({
-      isOpen: false,
-      openedBy: '',
-      openingCash: 0,
-      expectedCash: 0,
-      closedCash: 0,
-      discrepancy: 0,
-      status: 'closed'
-    });
-    setTents(prev => prev.map(t => ({ ...t, status: 'empty', waiter: '' })));
-    logAction(currentUser.name, 'تصفير نهاية اليوم', 'تم تصفير المبيعات والطلبات وسجل النشاط لليوم الجديد', '🧹');
   };
 
   // --- لوحة تحكم المدير العام (Boss Controls) ---
@@ -502,12 +383,6 @@ export default function KarmelUltimatePOS() {
                   <strong className="text-md font-bold text-amber-950 block mt-1">{shift.isOpen ? `مفتوح بعهدة ${shift.openingCash} ₪` : "مغلق حالياً"}</strong>
                 </div>
               </div>
-              <div className="pt-4 flex flex-col sm:flex-row gap-3">
-                <button type="button" onClick={resetDayForBoss} className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-md transition-colors">
-                  🧹 تصفير اليوم وسجل النشاط
-                </button>
-                <p className="text-[11px] text-gray-500 sm:text-right">يمكن للبوس تصفير الطلبات والمبيعات وسجل النشاط بنهاية اليوم.</p>
-              </div>
 
               {/* لوحة إدارة الأقسام والتصنيفات */}
               <div className="border-t pt-4">
@@ -530,12 +405,7 @@ export default function KarmelUltimatePOS() {
 
               {/* لوحة إدارة وجبات وعناصر المنيو */}
               <div className="border-t pt-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <h4 className="text-xs font-bold text-gray-800">🍽️ إضافة وتعديل وجبات ومشروبات المنيو الرئيسي</h4>
-                  <button type="button" onClick={() => setShowBossMenu(prev => !prev)} className="text-[11px] px-3 py-1 rounded-full bg-emerald-700 text-white font-bold hover:bg-emerald-800 transition-colors">
-                    {showBossMenu ? 'إخفاء المنيو' : 'عرض المنيو'}
-                  </button>
-                </div>
+                <h4 className="text-xs font-bold text-gray-800 mb-2">🍽️ إضافة وتعديل وجبات ومشروبات المنيو الرئيسي</h4>
                 <form onSubmit={handleSaveMenu} className="grid grid-cols-1 sm:grid-cols-5 gap-2 bg-gray-50 p-3 rounded-xl">
                   <input type="text" placeholder="اسم الصنف بالعربية" required value={menuForm.nameAr} onChange={(e) => setMenuForm({ ...menuForm, nameAr: e.target.value })} className="p-2 text-xs border rounded-lg bg-white text-black outline-none" />
                   <input type="text" placeholder="English Name" required value={menuForm.nameEn} onChange={(e) => setMenuForm({ ...menuForm, nameEn: e.target.value })} className="p-2 text-xs border rounded-lg bg-white text-black outline-none" />
@@ -547,24 +417,6 @@ export default function KarmelUltimatePOS() {
                     {isEditingMenu ? "تحديث التعديلات" : "حفظ الصنف بالمنيو"}
                   </button>
                 </form>
-                {showBossMenu && (
-                  <div className="mt-4 bg-white border border-gray-200 rounded-xl p-3 max-h-56 overflow-y-auto">
-                    <h5 className="text-xs font-bold text-gray-700 mb-2">📋 أصناف المنيو الحالية</h5>
-                    {menuItems.length === 0 ? (
-                      <p className="text-[11px] text-gray-500">لا يوجد أصناف بعد.</p>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {menuItems.map(item => (
-                          <div key={item.id} className="border rounded-xl p-2 bg-gray-50 text-[11px]">
-                            <div className="font-bold text-gray-900">{item.nameAr}</div>
-                            <div className="text-gray-500">{item.nameEn}</div>
-                            <div className="text-emerald-700 font-black mt-1">{item.price} ₪</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* السجل الإداري البسيط والمطور (Scannable Audit Logs) */}
@@ -740,18 +592,17 @@ export default function KarmelUltimatePOS() {
         </div>
 
         {/* العمود الأيسر الجانبي (سلة السيرفيس أو كشف حساب الفاتورة للكاشير) */}
-        <div className="bg-white rounded-2xl shadow-md border flex flex-col h-[calc(100vh-120px)] sticky top-6 overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4 bg-gray-50 border-b rounded-t-2xl">
-              <h3 className="font-bold text-gray-800 text-xs">
-                {selectedTentId ? `📍 الموقع المحدد: ${selectedTentId}` : '⚠️ الرجاء اختيار موقع من المخطط'}
-              </h3>
-              {currentTableOrders.length > 0 && (
-                <span className="text-[10px] bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full mt-1 inline-block">
-                  يوجد {currentTableOrders.length} طلبات مسجلة بالحساب
-                </span>
-              )}
-            </div>
+        <div className="bg-white rounded-2xl shadow-md border flex flex-col h-[calc(100vh-120px)] sticky top-6">
+          <div className="p-4 bg-gray-50 border-b rounded-t-2xl">
+            <h3 className="font-bold text-gray-800 text-xs">
+              {selectedTentId ? `📍 الموقع المحدد: ${selectedTentId}` : '⚠️ الرجاء اختيار موقع من المخطط'}
+            </h3>
+            {currentTableOrders.length > 0 && (
+              <span className="text-[10px] bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full mt-1 inline-block">
+                يوجد {currentTableOrders.length} طلبات مسجلة بالحساب
+              </span>
+            )}
+          </div>
 
           {/* لوحة أخذ الطلبات وعناصر المنيو: تظهر حصراً لحساب مضيف الميدان (Service) */}
           {currentUser.role === 'service' ? (
@@ -798,16 +649,14 @@ export default function KarmelUltimatePOS() {
                     </div>
                   )}
                 </div>
-                <div className="sticky bottom-0 left-0 right-0 bg-blue-50/80 pt-2 z-10">
-                  <button 
-                    type="button"
-                    onClick={dispatchOrderToCashier} 
-                    disabled={serviceCart.length === 0 || !selectedTentId || isDispatching} 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed shadow-md transition-all mt-2"
-                  >
-                    {isDispatching ? '⏳ جاري إرسال الطلب...' : '🚀 بث وإرسال الطلب رسمياً (رنين الكاشير)'}
-                  </button>
-                </div>
+                <button 
+                  type="button"
+                  onClick={dispatchOrderToCashier} 
+                  disabled={serviceCart.length === 0 || !selectedTentId} 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed shadow-md transition-all mt-2"
+                >
+                  🚀 بث وإرسال الطلب رسمياً (رنين الكاشير)
+                </button>
               </div>
             </>
           ) : (
@@ -885,9 +734,8 @@ export default function KarmelUltimatePOS() {
             )}
           </div>
 
-          </div>
           {/* زر تصفية وإصدار الفاتورة الحرارية النهائي */}
-          <div className="p-3 bg-white border-t rounded-b-2xl sticky bottom-0 z-20">
+          <div className="p-3 bg-white border-t rounded-b-2xl">
             <button
               type="button"
               onClick={handlePaymentAndPrint}
@@ -922,7 +770,7 @@ export default function KarmelUltimatePOS() {
           <thead>
             <tr>
               <th>الصنف</th>
-              <th style={{ textAlign: 'center' }}>الكمية</th>
+              <th style={{ textAnign: 'center' }}>الكمية</th>
               <th style={{ textAlign: 'left' }}>السعر</th>
             </tr>
           </thead>
